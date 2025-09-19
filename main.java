@@ -6,7 +6,7 @@ abstract class Item {
     public String title;
     public String author;
     public boolean available;
-    public int borrowDurationDays;
+    public int borrowDuration;
     public Date borrowDate;
     private static int nextId = 1;
 
@@ -26,7 +26,7 @@ abstract class Item {
             System.out.println("Invalid borrow duration: " + durationDays);
             return;
         }
-        this.borrowDurationDays = durationDays;
+        this.borrowDuration = durationDays;
         this.borrowDate = new Date();
         this.available = false;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
@@ -56,8 +56,8 @@ abstract class Item {
 
     public int OverdueDays() {
         int borrowedDays = BorrowedDays();
-        if (borrowedDays > borrowDurationDays) {
-            return borrowedDays - borrowDurationDays;
+        if (borrowedDays > borrowDuration) {
+            return borrowedDays - borrowDuration;
         }
         return 0;
     }
@@ -66,7 +66,7 @@ abstract class Item {
         if (borrowDate == null) return null;
         Calendar cal = Calendar.getInstance();
         cal.setTime(borrowDate);
-        cal.add(Calendar.DAY_OF_MONTH, borrowDurationDays);
+        cal.add(Calendar.DAY_OF_MONTH, borrowDuration);
         return cal.getTime();
     }
 
@@ -85,7 +85,7 @@ abstract class Item {
         }
         available = true;
         borrowDate = null;
-        borrowDurationDays = 0;
+        borrowDuration = 0;
     }
 
     public int getId() {
@@ -120,7 +120,6 @@ interface Playable {
 }
 
 class AudioBook extends Item implements Playable {
-    private double durationHours;
 
     public AudioBook(String title, String author) {
         super(title, author);
@@ -213,7 +212,10 @@ class LibraNet {
     }
 
     public void listAllItems() {
-        for (Item i : items) i.displayDetails();
+        for (Item i : items)
+        { 
+            i.displayDetails();
+        }
     }
 }
 
@@ -231,7 +233,7 @@ public class main {
 
         library.borrow(b1, "1 week");
         library.borrow(a1, "10 days");
-        library.borrow(m1, "3");
+        library.borrow(m1, 5);
 
 
         library.returnItem(b1);
