@@ -2,12 +2,12 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 abstract class Item {
-    protected int id;
-    protected String title;
-    protected String author;
-    protected boolean available;
-    protected int borrowDurationDays;
-    protected Date borrowDate;
+    public int id;
+    public String title;
+    public String author;
+    public boolean available;
+    public int borrowDurationDays;
+    public Date borrowDate;
     private static int nextId = 1;
 
     public Item(String title, String author) {
@@ -31,7 +31,7 @@ abstract class Item {
         this.available = false;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         System.out.println(title + " borrowed for " + durationDays + " days on " + sdf.format(borrowDate) +
-                ". Due on " + sdf.format(getDueDate()));
+                ". Due on " + sdf.format(DueDate()));
     }
 
     public void borrow(String durationStr) {
@@ -47,22 +47,22 @@ abstract class Item {
         return available;
     }
 
-    public int getBorrowedDays() {
+    public int BorrowedDays() {
         if (borrowDate == null) return 0;
         Date today = new Date();
         long diffMillis = today.getTime() - borrowDate.getTime();
         return (int) (diffMillis / (1000L * 60 * 60 * 24));
     }
 
-    public int getOverdueDays() {
-        int borrowedDays = getBorrowedDays();
+    public int OverdueDays() {
+        int borrowedDays = BorrowedDays();
         if (borrowedDays > borrowDurationDays) {
             return borrowedDays - borrowDurationDays;
         }
         return 0;
     }
 
-    public Date getDueDate() {
+    public Date DueDate() {
         if (borrowDate == null) return null;
         Calendar cal = Calendar.getInstance();
         cal.setTime(borrowDate);
@@ -75,7 +75,7 @@ abstract class Item {
             System.out.println(title + " was not borrowed.");
             return;
         }
-        int overdue = getOverdueDays();
+        int overdue = OverdueDays();
         if (overdue > 0) {
             double fine = overdue * fineRate;
             fines.merge(id, fine, Double::sum);
@@ -109,7 +109,7 @@ class Book extends Item {
 
     public void displayDetails() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        String due = (borrowDate != null) ? sdf.format(getDueDate()) : "N/A";
+        String due = (borrowDate != null) ? sdf.format(DueDate()) : "N/A";
         System.out.println("BookID: " + id + ", Title: " + title + ", Author: " + author +
                 ", Pages: " + pageCount + ", Available: " + available + ", Due: " + due);
     }
@@ -136,7 +136,7 @@ class AudioBook extends Item implements Playable {
 
     public void displayDetails() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        String due = (borrowDate != null) ? sdf.format(getDueDate()) : "N/A";
+        String due = (borrowDate != null) ? sdf.format(DueDate()) : "N/A";
         System.out.println("AudioBookID: " + id + ", Title: " + title + ", Author: " + author +
                 ", Available: " + available + ", Due: " + due);
     }
@@ -157,31 +157,27 @@ class EMagazine extends Item {
 
     public void displayDetails() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        String due = (borrowDate != null) ? sdf.format(getDueDate()) : "N/A";
+        String due = (borrowDate != null) ? sdf.format(DueDate()) : "N/A";
         System.out.println("EMagazineID: " + id + ", Title: " + title + ", Author: " + author +
                 ", Issue No: " + issueNo + ", Available: " + available + ", Due: " + due);
     }
 }
 
 class DurationParser {
-    public static int parse(String s) {
-        if (s == null) throw new IllegalArgumentException("Duration string is null");
-        String t = s.trim().toLowerCase(Locale.ROOT);
-        if (t.isEmpty()) throw new IllegalArgumentException("Duration string is empty");
-        if (t.matches("^\\d+$")) {
-            return Integer.parseInt(t);
-        }
-        if (t.matches("^(\\d+)\\s*(d|day|days)$")) {
-            return Integer.parseInt(t.replaceAll("\\D+", ""));
-        }
-        if (t.matches("^(\\d+)\\s*(w|wk|week|weeks)$")) {
-            return Integer.parseInt(t.replaceAll("\\D+", "")) * 7;
-        }
-        if (t.matches("^(\\d+)\\s*(m|mo|month|months)$")) {
-            return Integer.parseInt(t.replaceAll("\\D+", "")) * 30;
-        }
-        throw new IllegalArgumentException("Unsupported duration format: '" + s + "'");
+    public static int parse(String input) {
+    input = input.toLowerCase().trim();
+    if (input.matches("\\d+")) {
+        return Integer.parseInt(input);
+    } else if (input.contains("day")) {
+        return Integer.parseInt(input.split(" ")[0]);
+    } else if (input.contains("week")) {
+        return Integer.parseInt(input.split(" ")[0]) * 7;
+    } else if (input.contains("month")) {
+        return Integer.parseInt(input.split(" ")[0]) * 30;
+    } else {
+        throw new IllegalArgumentException("Invalid duration format: " + input);
     }
+}
 }
 
 class LibraNet {
@@ -193,9 +189,6 @@ class LibraNet {
         items.add(item);
     }
 
-    public Optional<Item> findById(int id) {
-        return items.stream().filter(i -> i.getId() == id).findFirst();
-    }
 
     public void borrow(Item item, String durationStr) {
         item.borrow(durationStr);
@@ -214,7 +207,6 @@ class LibraNet {
             System.out.println("No fines recorded.");
             return;
         }
-        System.out.println("--- Fine Records ---");
         for (Map.Entry<Integer, Double> entry : fines.entrySet()) {
             System.out.println("Item ID " + entry.getKey() + " - Fine: Rs." + entry.getValue());
         }
@@ -241,7 +233,6 @@ public class main {
         library.borrow(a1, "10 days");
         library.borrow(m1, "3");
 
-        try { Thread.sleep(1500); } catch (InterruptedException e) {}
 
         library.returnItem(b1);
         library.returnItem(a1);
